@@ -1,7 +1,7 @@
 /*
  *  This file is part of WinSparkle (https://winsparkle.org)
  *
- *  Copyright (C) 2009-2018 Vaclav Slavik
+ *  Copyright (C) 2009-2019 Vaclav Slavik
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -92,7 +92,7 @@ enum DownloadFlag
 
     @see CheckConnection()
  */
-void DownloadFile(const std::string& url, IDownloadSink *sink, Thread *onThread, int flags = 0);
+void DownloadFile(const std::string& url, IDownloadSink *sink, Thread *onThread, const std::string &headers = "", int flags = 0);
 
 } // namespace winsparkle
 

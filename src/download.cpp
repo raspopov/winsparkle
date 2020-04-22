@@ -1,7 +1,7 @@
 /*
  *  This file is part of WinSparkle (https://winsparkle.org)
  *
- *  Copyright (C) 2009-2018 Vaclav Slavik
+ *  Copyright (C) 2009-2019 Vaclav Slavik
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -188,7 +188,7 @@ void WaitUntilSignaledWithTerminationCheck(Event& event, Thread *thread)
                                 public functions
  *--------------------------------------------------------------------------*/
 
-void DownloadFile(const std::string& url, IDownloadSink *sink, Thread *onThread, int flags)
+void DownloadFile(const std::string& url, IDownloadSink *sink, Thread *onThread, const std::string &headers, int flags)
 {
     char url_path[2048];
     URL_COMPONENTSA urlc;
@@ -234,8 +234,8 @@ void DownloadFile(const std::string& url, IDownloadSink *sink, Thread *onThread,
                          (
                              inet,
                              url.c_str(),
-                             NULL, // lpszHeaders
-                             -1,   // dwHeadersLength
+                             headers.c_str(),
+                             (DWORD)headers.length(),
                              dwFlags,
                              (DWORD_PTR)&context  // dwContext
                          );

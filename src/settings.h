@@ -1,7 +1,7 @@
 /*
  *  This file is part of WinSparkle (https://winsparkle.org)
  *
- *  Copyright (C) 2009-2018 Vaclav Slavik
+ *  Copyright (C) 2009-2019 Vaclav Slavik
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -26,9 +26,11 @@
 #ifndef _settings_h_
 #define _settings_h_
 
+#include "winsparkle.h"
 #include "threads.h"
 #include "utils.h"
 
+#include <map>
 #include <string>
 #include <sstream>
 
@@ -196,6 +198,30 @@ public:
         ms_appVersion = version;
     }
 
+    /// Add a custom HTT header to requests
+    static void SetHttpHeader(const char *name, const char *value)
+    {
+        CriticalSectionLocker lock(ms_csVars);
+        ms_httpHeaders[name] = value;
+    }
+
+    /// Get a string containing all custom HTTP headers
+    static std::string GetHttpHeadersString()
+    {
+        CriticalSectionLocker lock(ms_csVars);
+        std::string out;
+        for (auto i = ms_httpHeaders.begin(); i != ms_httpHeaders.end(); ++i)
+            out += i->first + ": " + i->second + "\r\n";
+        return out;
+    }
+
+    /// Clear previously set HTTP headers
+    static void ClearHttpHeaders()
+    {
+        CriticalSectionLocker lock(ms_csVars);
+        ms_httpHeaders.clear();
+    }
+
     /// Set application's build version number
     static void SetAppBuildVersion(const wchar_t *version)
     {
@@ -215,6 +241,24 @@ public:
     {
         CriticalSectionLocker lock(ms_csVars);
         ms_registryPath = path;
+    }
+
+    /// Return WinSparkle's default configuration read, write and delete functions
+    static win_sparkle_config_methods_t GetDefaultConfigMethods()
+    {
+        win_sparkle_config_methods_t defaultConfigMethods;
+        defaultConfigMethods.config_read = &RegistryRead;
+        defaultConfigMethods.config_write = &RegistryWrite;
+        defaultConfigMethods.config_delete = &RegistryDelete;
+        defaultConfigMethods.user_data = NULL;
+        return defaultConfigMethods;
+    }
+
+    /// Set custom configuration read, write and delete functions
+    static void SetConfigMethods(win_sparkle_config_methods_t *customConfigMethods)
+    {
+        CriticalSectionLocker lock(ms_csVars);
+        ms_configMethods = customConfigMethods ? *customConfigMethods : GetDefaultConfigMethods();
     }
 
     /// Set PEM data and verify in contains valid DSA public key
@@ -311,6 +355,10 @@ private:
     static void DoWriteConfigValue(const char *name, const wchar_t *value);
     static std::wstring DoReadConfigValue(const char *name);
 
+    static int __cdecl RegistryRead(const char *name, wchar_t *buf, size_t len, void *);
+    static void __cdecl RegistryWrite(const char *name, const wchar_t *value, void *);
+    static void __cdecl RegistryDelete(const char *name, void *);
+
 private:
     // guards the variables below:
     static CriticalSection ms_csVars;
@@ -323,6 +371,8 @@ private:
     static std::wstring ms_appVersion;
     static std::wstring ms_appBuildVersion;
     static std::string  ms_DSAPubKey;
+    static std::map<std::string, std::string> ms_httpHeaders;
+    static win_sparkle_config_methods_t ms_configMethods;
 };
 
 } // namespace winsparkle

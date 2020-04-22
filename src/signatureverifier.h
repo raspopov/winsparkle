@@ -1,7 +1,7 @@
 /*
  *  This file is part of WinSparkle (https://winsparkle.org)
  *
- *  Copyright (C) 2017-2018 Ihor Dutchak
+ *  Copyright (C) 2017-2019 Ihor Dutchak
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
 #ifndef _signatureverifier_h_
 #define _signatureverifier_h_
 
-#include <exception>
+#include <stdexcept>
 #include <string>
 
 namespace winsparkle

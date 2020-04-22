@@ -1,7 +1,7 @@
 /*
  *  This file is part of WinSparkle (https://winsparkle.org)
  *
- *  Copyright (C) 2009-2018 Vaclav Slavik
+ *  Copyright (C) 2009-2019 Vaclav Slavik
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -223,6 +223,25 @@ WIN_SPARKLE_API void __cdecl win_sparkle_set_app_details(const wchar_t *company_
 WIN_SPARKLE_API void __cdecl win_sparkle_set_app_build_version(const wchar_t *build);
 
 /**
+    Set custom HTTP header for appcast checks.
+
+    @since 0.7
+
+    @see win_sparkle_clear_http_headers()
+*/
+WIN_SPARKLE_API void __cdecl win_sparkle_set_http_header(const char *name, const char *value);
+
+/**
+    Clears all custom HTTP headers previously added using
+    win_sparkle_set_http_header().
+
+    @since 0.7
+
+    @see win_sparkle_set_http_header()
+*/
+WIN_SPARKLE_API void __cdecl win_sparkle_clear_http_headers();
+
+/**
     Set the registry path where settings will be stored.
 
     Normally, these are stored in
@@ -241,6 +260,42 @@ WIN_SPARKLE_API void __cdecl win_sparkle_set_app_build_version(const wchar_t *bu
     @since 0.3
  */
 WIN_SPARKLE_API void __cdecl win_sparkle_set_registry_path(const char *path);
+
+/// Type used to override WinSparkle configuration's read, write and delete functions
+typedef struct win_sparkle_config_methods_tag {
+    /// Copy config value named @a name to the buffer pointed by @a buf, returns TRUE on success, FALSE on failure
+    int(__cdecl *config_read)(const char *name, wchar_t *buf, size_t len, void *user_data);
+    /// Write @a value as config value @a name 's new value
+    void(__cdecl *config_write)(const char *name, const wchar_t *value, void *user_data);
+    /// Delete config value named @a name
+    void(__cdecl *config_delete)(const char *name, void *user_data);
+    /// Arbitrary data which will be passed to the above functions, WinSparkle will not read or alter it.
+    void *user_data;
+} win_sparkle_config_methods_t;
+
+
+/**
+    Override WinSparkle's configuration read, write and delete functions.
+
+    By default, WinSparkle will read, write and delete configuration values by
+    interacting directly with Windows Registry.
+    If you want to manage configuration by yourself, or if you don't want let WinSparkle 
+    write settings directly to the Windows Registry, you can provide your own functions 
+    to read, write and delete configuration.
+
+    These functions needs to return TRUE on success, FALSE on failure.
+    If you passed NULL as a configuration action (read, write or delete)'s function pointer, 
+    WinSparkle will use the default function for that action.
+
+    @param config_methods  Your own configuration read, write and delete functions.
+                           Pass NULL to let WinSparkle continue to use its default functions.
+
+    @note There's no guarantee about the thread from which these functions are called,
+          Make sure your functions are thread-safe.
+
+    @since 0.7
+*/
+WIN_SPARKLE_API void __cdecl win_sparkle_set_config_methods(win_sparkle_config_methods_t *config_methods);
 
 /**
     Sets whether updates are checked automatically or only through a manual call.

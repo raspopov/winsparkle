@@ -1,7 +1,7 @@
 /*
  *  This file is part of WinSparkle (https://winsparkle.org)
  *
- *  Copyright (C) 2017-2018 Ihor Dutchak
+ *  Copyright (C) 2017-2019 Ihor Dutchak
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -120,7 +120,7 @@ public:
 
     void hashData(const void *buffer, size_t buffer_len)
     {
-        if (!CryptHashData(handle, (CONST BYTE  *)buffer, buffer_len, 0))
+        if (!CryptHashData(handle, (CONST BYTE  *)buffer, (DWORD)buffer_len, 0))
             throw Win32Exception("Failed to hash data");
     }
 
@@ -191,7 +191,7 @@ public:
 
         DSAPub pubKey(Settings::GetDSAPubKeyPem());
 
-        const int code = DSA_verify(0, sha1, ARRAYSIZE(sha1), (const unsigned char*)signature.c_str(), signature.size(), pubKey);
+        const int code = DSA_verify(0, sha1, ARRAYSIZE(sha1), (const unsigned char*)signature.c_str(), (int)signature.size(), pubKey);
 
         if (code == -1) // OpenSSL error
             throw BadSignatureException(ERR_error_string(ERR_get_error(), nullptr));
@@ -203,15 +203,15 @@ public:
 private:
     class BIOWrap
     {
-        BIO* bio = NULL;
+        BIO* bio;
 
         BIOWrap(const BIOWrap &);
         BIOWrap &operator=(const BIOWrap &);
 
     public:
         BIOWrap(const std::string &mem_buf)
+            : bio(BIO_new_mem_buf(mem_buf.c_str(), int(mem_buf.size())))
         {
-            bio = BIO_new_mem_buf(mem_buf.c_str(), int(mem_buf.size()));
             if (!bio)
                 throw std::invalid_argument("Cannot set PEM key mem buffer");
         }
@@ -231,13 +231,14 @@ private:
 public:
     class DSAPub
     {
-        DSA *dsa = NULL;
+        DSA *dsa;
 
         DSAPub(const DSAPub &);
         DSAPub &operator=(const DSAPub &);
 
     public:
         DSAPub(const std::string &pem_key)
+            : dsa(NULL)
         {
             BIOWrap bio(pem_key);
             if (!PEM_read_bio_DSA_PUBKEY(bio, &dsa, NULL, NULL))
@@ -268,10 +269,10 @@ std::string Base64ToBin(const std::string &base64)
 
     bool ok = false;
 
-    if (CryptStringToBinaryA(&base64[0], base64.size(), CRYPT_STRING_BASE64, NULL, &nDestinationSize, NULL, NULL))
+    if (CryptStringToBinaryA(&base64[0], (DWORD)base64.size(), CRYPT_STRING_BASE64, NULL, &nDestinationSize, NULL, NULL))
     {
         bin.resize(nDestinationSize);
-        if (CryptStringToBinaryA(&base64[0], base64.size(), CRYPT_STRING_BASE64, (BYTE *)&bin[0], &nDestinationSize, NULL, NULL))
+        if (CryptStringToBinaryA(&base64[0], (DWORD)base64.size(), CRYPT_STRING_BASE64, (BYTE *)&bin[0], &nDestinationSize, NULL, NULL))
         {
             ok = true;
         }
